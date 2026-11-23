@@ -1,0 +1,18 @@
+{
+  "fixture": {
+    "profile": "medium",
+    "seed": "42",
+    "size": 4
+  },
+  "hashes": {
+    "a4-2up-pdf": "291e84acf386645da6ebda5601db17bab1cea98ffccd9bfda6edf08d9c7751ef",
+    "generation-report-json": "a7b0e3f080da63e2637fea0dce535467fe895cb3b14feb55ea6af1bb24733602",
+    "letter-4up-pdf": "40b3d1a8c6c8006912d08a5ddf72973c8abea34fb9984f95a49ee6a5836ef20d",
+    "puzzle-json": "3d96632924d5ccdb191fe570fec19e069f33dcb605bfe64290136f1d9cb2e511",
+    "standalone-pdf": "0b422651b708c7355be54af0eafb82148d5043769f7131097e9edb2bd96bb711",
+    "standalone-png-300x300": "cad9b3491e366abd401183f148acbcd69a80c8d189e98773a230a6625bc37861",
+    "standalone-solved-svg": "5c6dcf54a2cd8437f2553b186878f2daeac7efc64600981e9600e29713754bf0",
+    "standalone-svg": "6a1c210a9b49b4295fa4db63be09d63029317c6740d31dd653cdc9de9a5d4ad9"
+  },
+  "schema": "kenken.artifact-goldens/v1"
+}

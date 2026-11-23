@@ -1,0 +1,10 @@
+KenKen Vector Glyph Font
+Copyright (c) 2026 KenKen contributors
+
+The compact digit and arithmetic glyph patterns bundled in
+kenken.rendering.puzzle are original project assets and are licensed under the
+same MIT License as this package. They may be used, copied, modified, merged,
+published, distributed, sublicensed, and/or sold with the package, subject to
+the package's MIT License.
+
+The glyphs do not depend on, derive from, or require any host-installed font.

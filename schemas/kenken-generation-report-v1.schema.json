@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/kenken-generation-report-v1.schema.json",
+  "title": "KenKen generation report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "seed",
+    "requested_profile",
+    "attempts",
+    "accepted_attempt",
+    "evaluated_difficulty",
+    "rejection_counts"
+  ],
+  "properties": {
+    "schema": {"const": "kenken.generation-report/v1"},
+    "seed": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
+    "requested_profile": {"enum": ["easy", "medium", "hard"]},
+    "attempts": {"type": "integer", "minimum": 1},
+    "accepted_attempt": {"type": ["integer", "null"], "minimum": 1},
+    "evaluated_difficulty": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policy", "band", "stats"],
+          "properties": {
+            "policy": {"const": "search-v1"},
+            "band": {"enum": ["easy", "medium", "hard"]},
+            "stats": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "visited_nodes",
+                "backtracks",
+                "max_decision_depth",
+                "propagation_rounds"
+              ],
+              "properties": {
+                "visited_nodes": {"type": "integer", "minimum": 1},
+                "backtracks": {"type": "integer", "minimum": 0},
+                "max_decision_depth": {"type": "integer", "minimum": 0},
+                "propagation_rounds": {"type": "integer", "minimum": 1}
+              }
+            }
+          }
+        }
+      ]
+    },
+    "rejection_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invalid",
+        "unsatisfiable",
+        "multiple",
+        "unknown",
+        "solution_mismatch",
+        "difficulty_mismatch"
+      ],
+      "properties": {
+        "invalid": {"type": "integer", "minimum": 0},
+        "unsatisfiable": {"type": "integer", "minimum": 0},
+        "multiple": {"type": "integer", "minimum": 0},
+        "unknown": {"type": "integer", "minimum": 0},
+        "solution_mismatch": {"type": "integer", "minimum": 0},
+        "difficulty_mismatch": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

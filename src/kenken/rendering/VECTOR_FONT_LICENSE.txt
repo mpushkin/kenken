@@ -1,0 +1,4 @@
+Copyright 2026 KenKen contributors
+
+The vector glyph geometry in typography.py is original to this project and is
+licensed under the MIT license declared by the KenKen package.

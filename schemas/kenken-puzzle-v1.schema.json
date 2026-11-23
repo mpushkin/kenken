@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/kenken-puzzle-v1.schema.json",
+  "title": "PuzzleDefinitionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "size", "cages"],
+  "properties": {
+    "schema": {"const": "kenken.puzzle/v1"},
+    "id": {
+      "type": "string",
+      "pattern": "^kk-([3-9])x\\1-[0-9a-f]{16}$"
+    },
+    "size": {"type": "integer", "minimum": 3, "maximum": 9},
+    "cages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/cage"}
+    },
+    "provenance": {"$ref": "#/$defs/provenance"}
+  },
+  "$defs": {
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["row", "column"],
+      "properties": {
+        "row": {"type": "integer", "minimum": 0, "maximum": 8},
+        "column": {"type": "integer", "minimum": 0, "maximum": 8}
+      }
+    },
+    "cage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "operator", "cells"],
+      "properties": {
+        "target": {"type": "integer", "minimum": 1},
+        "operator": {
+          "enum": ["given", "add", "subtract", "multiply", "divide"]
+        },
+        "cells": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {"$ref": "#/$defs/cell"}
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generator_version", "seed", "profile", "accepted_attempt"],
+      "properties": {
+        "generator_version": {
+          "type": "string",
+          "pattern": "^[0-9A-Za-z][0-9A-Za-z.+-]{0,63}$"
+        },
+        "seed": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$"
+        },
+        "profile": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,31}$"
+        },
+        "accepted_attempt": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}
+

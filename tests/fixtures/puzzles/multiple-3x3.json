@@ -1,0 +1,2 @@
+{"cages":[{"cells":[{"column":0,"row":0},{"column":1,"row":0},{"column":2,"row":0}],"operator":"add","target":6},{"cells":[{"column":0,"row":1},{"column":1,"row":1},{"column":2,"row":1}],"operator":"add","target":6},{"cells":[{"column":0,"row":2},{"column":1,"row":2},{"column":2,"row":2}],"operator":"add","target":6}],"id":"kk-3x3-2c4005f431822189","schema":"kenken.puzzle/v1","size":3}
+

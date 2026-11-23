@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/kenken-generation-report-v3.schema.json",
+  "title": "KenKen generation report v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "seed",
+    "size",
+    "requested_profile",
+    "attempts",
+    "accepted_attempt",
+    "evaluated_difficulty",
+    "given_cage_policy",
+    "arithmetic_cage_policy",
+    "rejection_counts"
+  ],
+  "properties": {
+    "schema": {"const": "kenken.generation-report/v3"},
+    "seed": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
+    "size": {"enum": [4, 5, 6]},
+    "requested_profile": {"enum": ["easy", "medium", "hard"]},
+    "attempts": {"type": "integer", "minimum": 1},
+    "accepted_attempt": {"type": ["integer", "null"], "minimum": 1},
+    "evaluated_difficulty": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policy", "band", "stats"],
+          "properties": {
+            "policy": {"const": "search-v1"},
+            "band": {"enum": ["easy", "medium", "hard"]},
+            "stats": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "visited_nodes",
+                "backtracks",
+                "max_decision_depth",
+                "propagation_rounds"
+              ],
+              "properties": {
+                "visited_nodes": {"type": "integer", "minimum": 1},
+                "backtracks": {"type": "integer", "minimum": 0},
+                "max_decision_depth": {"type": "integer", "minimum": 0},
+                "propagation_rounds": {"type": "integer", "minimum": 1}
+              }
+            }
+          }
+        }
+      ]
+    },
+    "given_cage_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "max_given_cages", "accepted_given_cages"],
+      "properties": {
+        "policy": {"const": "given-cap-v1"},
+        "max_given_cages": {"type": "integer", "minimum": 0},
+        "accepted_given_cages": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "arithmetic_cage_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "applicable", "limits", "accepted_maxima"],
+      "properties": {
+        "policy": {"const": "arithmetic-cap-v1"},
+        "applicable": {"type": "boolean"},
+        "limits": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/limits"}
+          ]
+        },
+        "accepted_maxima": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/maxima"}
+          ]
+        }
+      }
+    },
+    "rejection_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invalid",
+        "given_limit_exceeded",
+        "arithmetic_limit_exceeded",
+        "unsatisfiable",
+        "multiple",
+        "unknown",
+        "solution_mismatch",
+        "difficulty_mismatch"
+      ],
+      "properties": {
+        "invalid": {"type": "integer", "minimum": 0},
+        "given_limit_exceeded": {"type": "integer", "minimum": 0},
+        "arithmetic_limit_exceeded": {"type": "integer", "minimum": 0},
+        "unsatisfiable": {"type": "integer", "minimum": 0},
+        "multiple": {"type": "integer", "minimum": 0},
+        "unknown": {"type": "integer", "minimum": 0},
+        "solution_mismatch": {"type": "integer", "minimum": 0},
+        "difficulty_mismatch": {"type": "integer", "minimum": 0}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"requested_profile": {"const": "easy"}},
+        "required": ["requested_profile"]
+      },
+      "then": {
+        "properties": {
+          "arithmetic_cage_policy": {
+            "properties": {
+              "applicable": {"const": true},
+              "limits": {"$ref": "#/$defs/limits"}
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "arithmetic_cage_policy": {
+            "properties": {
+              "applicable": {"const": false},
+              "limits": {"type": "null"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"accepted_attempt": {"type": "null"}},
+        "required": ["accepted_attempt"]
+      },
+      "then": {
+        "properties": {
+          "evaluated_difficulty": {"type": "null"},
+          "given_cage_policy": {
+            "properties": {"accepted_given_cages": {"type": "null"}}
+          },
+          "arithmetic_cage_policy": {
+            "properties": {"accepted_maxima": {"type": "null"}}
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "evaluated_difficulty": {"type": "object"},
+          "given_cage_policy": {
+            "properties": {"accepted_given_cages": {"type": "integer"}}
+          },
+          "arithmetic_cage_policy": {
+            "properties": {"accepted_maxima": {"$ref": "#/$defs/maxima"}}
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_cage_cells",
+        "max_add_terms",
+        "max_add_target",
+        "max_multiply_factors",
+        "max_multiply_target"
+      ],
+      "properties": {
+        "max_cage_cells": {"type": "integer", "minimum": 1},
+        "max_add_terms": {"type": "integer", "minimum": 1},
+        "max_add_target": {"type": "integer", "minimum": 1},
+        "max_multiply_factors": {"type": "integer", "minimum": 1},
+        "max_multiply_target": {"type": "integer", "minimum": 1}
+      }
+    },
+    "maxima": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_cage_cells",
+        "max_add_terms",
+        "max_add_target",
+        "max_multiply_factors",
+        "max_multiply_target"
+      ],
+      "properties": {
+        "max_cage_cells": {"type": "integer", "minimum": 1},
+        "max_add_terms": {"type": ["integer", "null"], "minimum": 1},
+        "max_add_target": {"type": ["integer", "null"], "minimum": 1},
+        "max_multiply_factors": {"type": ["integer", "null"], "minimum": 1},
+        "max_multiply_target": {"type": ["integer", "null"], "minimum": 1}
+      }
+    }
+  }
+}

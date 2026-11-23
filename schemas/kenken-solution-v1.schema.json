@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/kenken-solution-v1.schema.json",
+  "title": "SolutionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "puzzle_id", "grid"],
+  "properties": {
+    "schema": {"const": "kenken.solution/v1"},
+    "puzzle_id": {
+      "type": "string",
+      "pattern": "^kk-([3-9])x\\1-[0-9a-f]{16}$"
+    },
+    "grid": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 9,
+      "items": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 9,
+        "items": {"type": "integer", "minimum": 1, "maximum": 9}
+      }
+    }
+  }
+}
+
