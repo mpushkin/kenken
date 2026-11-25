@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ec">
+  <title>Play KenKen</title>
+  <link rel="stylesheet" href="./game/style.css">
+  <script defer src="./game/puzzles.js"></script>
+  <script defer src="./game/game.js"></script>
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <div class="title">
+        <span class="mark" aria-hidden="true">
+          <span>+</span><span>×</span><span>−</span><span>÷</span>
+        </span>
+        <h1>KenKen</h1>
+      </div>
+      <a class="download" href="./examples/set-21.pdf" download>
+        <span aria-hidden="true">↓</span> Download Set 21 <span class="file-type">PDF</span>
+      </a>
+    </header>
+
+    <noscript><p>Enable JavaScript to play KenKen in your browser.</p></noscript>
+
+    <div class="workspace" hidden>
+      <section class="rules" aria-labelledby="rules-title">
+        <h2 id="rules-title">How to play</h2>
+        <p>Use the numbers <strong id="number-range"></strong> exactly once in each row and column.</p>
+        <p>Each outlined cage must reach its target using the shown operation. A single number without an operation is given.</p>
+      </section>
+
+      <section class="play" aria-label="Puzzle">
+        <div class="board-toolbar">
+          <label for="puzzle">Puzzle</label>
+          <select id="puzzle"></select>
+          <span id="progress" class="progress"></span>
+        </div>
+        <div class="print-title">
+          <h2 id="print-name"></h2>
+          <p id="print-id"></p>
+        </div>
+        <div id="board" class="board" role="grid" aria-label="KenKen board" aria-describedby="keyboard-help"></div>
+      </section>
+
+      <section class="controls" aria-labelledby="controls-title">
+        <h2 id="controls-title">Enter a number</h2>
+        <div id="keypad" class="keypad" role="group" aria-label="Number pad"></div>
+        <p id="keyboard-help" class="keyboard-help">Select a cell, then type or tap a number. Use arrow keys to move and Backspace or Delete to clear.</p>
+        <div class="actions">
+          <button type="button" class="primary" id="check">Check</button>
+          <button type="button" id="reset">Reset</button>
+          <button type="button" id="print">Print</button>
+        </div>
+        <p id="status" class="status" role="status" aria-atomic="true"></p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
