@@ -139,6 +139,12 @@ button { touch-action: manipulation; }
   margin-bottom: 0.875rem;
 }
 
+.board-option {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
 .board-toolbar label {
   font-size: 0.875rem;
   font-weight: 700;

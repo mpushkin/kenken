@@ -1,7 +1,8 @@
 "use strict";
 
 const workspace = document.querySelector(".workspace");
-const picker = document.querySelector("#puzzle");
+const sizePicker = document.querySelector("#size");
+const difficultyPicker = document.querySelector("#difficulty");
 const board = document.querySelector("#board");
 const keypad = document.querySelector("#keypad");
 const progress = document.querySelector("#progress");
@@ -156,10 +157,13 @@ function playPuzzle(next) {
   selected = cellCages.findIndex(cage => cage.operator !== "given");
   conflicts.clear();
   setFeedback();
-  picker.value = puzzle.id;
+  sizePicker.value = puzzle.size;
+  difficultyPicker.value = puzzle.provenance.profile;
   save("selected", puzzle.id);
   document.querySelector("#number-range").textContent = `1 to ${puzzle.size}`;
-  document.querySelector("#print-name").textContent = `KenKen · ${picker.selectedOptions[0].textContent}`;
+  const sizeLabel = sizePicker.selectedOptions[0].textContent;
+  const difficultyLabel = difficultyPicker.selectedOptions[0].textContent;
+  document.querySelector("#print-name").textContent = `KenKen · ${sizeLabel} · ${difficultyLabel}`;
   document.querySelector("#print-id").textContent = puzzle.id;
   buildBoard();
   buildKeypad();
@@ -281,17 +285,21 @@ keypad.addEventListener("click", event => {
   if (key) enterDigit(Number(key.dataset.digit));
 });
 
-picker.addEventListener("change", () => {
-  playPuzzle(PUZZLES.find(candidate => candidate.id === picker.value));
-});
+function changePuzzle() {
+  const size = Number(sizePicker.value);
+  const profile = difficultyPicker.value;
+  const next = PUZZLES.find(candidate =>
+    candidate.size === size && candidate.provenance.profile === profile
+  );
+  if (next && next !== puzzle) playPuzzle(next);
+}
+
+sizePicker.addEventListener("change", changePuzzle);
+difficultyPicker.addEventListener("change", changePuzzle);
 document.querySelector("#check").addEventListener("click", checkBoard);
 document.querySelector("#reset").addEventListener("click", resetBoard);
 document.querySelector("#print").addEventListener("click", () => window.print());
 
-for (const { id, size, provenance } of PUZZLES) {
-  const profile = provenance.profile;
-  picker.add(new Option(`${size}×${size} · ${profile[0].toUpperCase() + profile.slice(1)}`, id));
-}
 const savedId = readSaved("selected");
 playPuzzle(PUZZLES.find(candidate => candidate.id === savedId) ?? PUZZLES[0]);
 workspace.hidden = false;

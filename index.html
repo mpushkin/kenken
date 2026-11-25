@@ -34,8 +34,21 @@
 
       <section class="play" aria-label="Puzzle">
         <div class="board-toolbar">
-          <label for="puzzle">Puzzle</label>
-          <select id="puzzle"></select>
+          <div class="board-option">
+            <label for="size">Size</label>
+            <select id="size">
+              <option value="4">4×4</option>
+              <option value="5">5×5</option>
+            </select>
+          </div>
+          <div class="board-option">
+            <label for="difficulty">Difficulty</label>
+            <select id="difficulty">
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
           <span id="progress" class="progress"></span>
         </div>
         <div class="print-title">
