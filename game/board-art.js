@@ -71,9 +71,11 @@ function centeredGlyphPath(text, center, y, height) {
   return glyphPath(text, center - Math.floor(glyphWidth(text, height) / 2), y, height);
 }
 
-function cageClue(text) {
+function cageClue(text, cell) {
   let height = 225;
   while (glyphWidth(text, height) > 840) height -= 5;
+  // Allow for the clue's offset and stroke when masking the inset selection ring.
+  cell.style.setProperty("--clue-ring-clearance", `${(80 + glyphWidth(text, height) + 60) / 10}%`);
   return strokePath(glyphPath(text, 80, 75, height), Math.max(24, Math.floor(height / 8)), "clue");
 }
 

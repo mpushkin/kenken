@@ -217,32 +217,37 @@ button { touch-action: manipulation; }
 .cell-lines { color: #bcc4cf; }
 
 @media screen {
-  .cell::before {
+  .grid-cell[aria-selected="true"] .cell::after {
     position: absolute;
-    inset: max(1px, 2.4%);
+    inset: max(4px, 6%);
+    border: 3px dashed var(--accent);
     pointer-events: none;
     content: "";
   }
 
-  .cell.in-cage::before { background: rgb(34 87 64 / 9%); }
-
-  .grid-cell[aria-selected="true"] .cell::before {
-    background: rgb(34 87 64 / 17%);
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
+  /* Leave a gap in the ring around the original worksheet clue. */
+  .cell:has(.clue)::after {
+    clip-path: polygon(
+      0 33%, var(--clue-ring-clearance) 33%, var(--clue-ring-clearance) 0,
+      100% 0, 100% 100%, 0 100%
+    );
   }
 
-  .cell:focus-visible {
-    outline: 2px dashed var(--accent);
-    outline-offset: -5px;
+  .grid-cell[aria-selected="true"] .cell:focus-visible { outline: none; }
+
+  .grid-cell[aria-selected="true"] .cell:focus-visible::after {
+    border-width: 4px;
+    border-color: var(--board-ink);
   }
 
-  .grid-cell .cell.conflict::before {
+  .cell.conflict::before {
+    position: absolute;
+    inset: max(1px, 2.4%);
     background: rgb(161 49 40 / 16%);
     box-shadow: inset 0 -3px #a13128;
+    pointer-events: none;
+    content: "";
   }
-
-  .grid-cell[aria-selected="true"] .cell.conflict::before { box-shadow: inset 0 -5px #a13128; }
 }
 
 .controls { grid-area: controls; }
@@ -377,7 +382,7 @@ button { touch-action: manipulation; }
   }
   .print-title { display: block; margin-bottom: 5mm; }
   .print-title p { margin-top: 1mm; font-size: 10pt; }
-  .cell { outline: 0; }
+  .cell:focus { outline: 0; }
   .clue, .cell .value, .cage-lines, .coordinates { color: black; }
   .cell-lines { color: #888; }
 }

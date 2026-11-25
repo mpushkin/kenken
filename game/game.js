@@ -128,7 +128,7 @@ function buildBoard() {
         focusable: "false",
       });
       if (!given && cage.indexes[0] === index) {
-        drawing.append(cageClue(cage.target + symbols[cage.operator]));
+        drawing.append(cageClue(cage.target + symbols[cage.operator], cellButton));
       }
       const value = strokePath("", 45, "value");
       drawing.append(value);
@@ -165,7 +165,6 @@ function renderState() {
     value.setAttribute("d", digit ? centeredGlyphPath(String(digit), 500, given ? 270 : 390, 460) : "");
     gridCell.setAttribute("aria-selected", index === selected);
     cellButton.tabIndex = index === selected ? 0 : -1;
-    cellButton.classList.toggle("in-cage", cellCages[index] === cellCages[selected]);
     cellButton.classList.toggle("conflict", conflict);
 
     const entry = given ? `given ${digit}` : digit || "empty";
