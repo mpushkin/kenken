@@ -6,7 +6,7 @@
   --muted: #4b5c52;
   --line: #c6cec2;
   --accent: #225740;
-  --cage-line: #26392e;
+  --board-ink: #182436;
   font-family: system-ui, sans-serif;
   color: var(--ink);
   background: var(--paper);
@@ -80,7 +80,7 @@ button, select, .download {
 button, select { cursor: pointer; }
 button { touch-action: manipulation; }
 
-:is(button, select, a):focus-visible {
+:is(button, select, a, input):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
@@ -165,14 +165,25 @@ button { touch-action: manipulation; }
 
 .print-title { display: none; }
 
+.board-frame {
+  position: relative;
+  aspect-ratio: 1;
+}
+
+#board-art {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .board {
+  position: absolute;
+  inset: var(--board-start) var(--board-end) var(--board-end) var(--board-start);
   display: grid;
   grid-template-rows: repeat(var(--size), minmax(0, 1fr));
-  aspect-ratio: 1;
-  border: 3px solid var(--cage-line);
-  background: var(--surface);
-  box-shadow: 5px 5px #e3e7db;
-  container-type: inline-size;
 }
 
 .board-row {
@@ -180,20 +191,9 @@ button { touch-action: manipulation; }
   grid-template-columns: repeat(var(--size), minmax(0, 1fr));
 }
 
-.grid-cell {
-  border-inline-end: 1px solid var(--line);
-  border-block-end: 1px solid var(--line);
-}
-
-.grid-cell.edge-right { border-inline-end: 3px solid var(--cage-line); }
-.grid-cell.edge-bottom { border-block-end: 3px solid var(--cage-line); }
-.grid-cell:last-child { border-inline-end: 0; }
-.board-row:last-child .grid-cell { border-block-end: 0; }
-
 .cell {
   position: relative;
-  display: grid;
-  place-items: center;
+  display: block;
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -201,39 +201,35 @@ button { touch-action: manipulation; }
   border: 0;
   border-radius: 0;
   background: transparent;
-  font-variant-numeric: tabular-nums;
 }
 
-.clue {
-  position: absolute;
-  top: clamp(0.25rem, 1.45cqi, 0.5rem);
-  left: clamp(0.25rem, 1.55cqi, 0.5rem);
-  font-size: clamp(0.75rem, 3.4cqi, 1rem);
-  font-weight: 750;
-  line-height: 1;
+.cell svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
-.value {
-  padding-top: 0.14em;
-  color: var(--accent);
-  font-size: clamp(1.55rem, 9cqi, 2.75rem);
-  font-weight: 500;
-  line-height: 1;
-}
-
-.given .value {
-  padding-top: 0;
-  color: var(--ink);
-  font-weight: 700;
-}
+.clue, .given .value, .cage-lines { color: var(--board-ink); }
+.value { color: #345477; }
+.coordinates { color: #434d5b; }
+.cell-lines { color: #bcc4cf; }
 
 @media screen {
-  .cell.given { background: #edf0e9; }
-  .cell.in-cage { background: #eaf3eb; }
+  .cell::before {
+    position: absolute;
+    inset: max(1px, 2.4%);
+    pointer-events: none;
+    content: "";
+  }
 
-  .grid-cell[aria-selected="true"] .cell {
-    background: #d3e8d7;
-    box-shadow: inset 0 0 0 2px var(--accent);
+  .cell.in-cage::before { background: rgb(34 87 64 / 9%); }
+
+  .grid-cell[aria-selected="true"] .cell::before {
+    background: rgb(34 87 64 / 17%);
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
   }
 
   .cell:focus-visible {
@@ -241,14 +237,12 @@ button { touch-action: manipulation; }
     outline-offset: -5px;
   }
 
-  .grid-cell .cell.conflict {
-    background: #f8e3dc;
-    box-shadow: inset 0 -4px #a13128;
+  .grid-cell .cell.conflict::before {
+    background: rgb(161 49 40 / 16%);
+    box-shadow: inset 0 -3px #a13128;
   }
 
-  .grid-cell[aria-selected="true"] .cell.conflict {
-    box-shadow: inset 0 0 0 2px var(--accent), inset 0 -6px #a13128;
-  }
+  .grid-cell[aria-selected="true"] .cell.conflict::before { box-shadow: inset 0 -5px #a13128; }
 }
 
 .controls { grid-area: controls; }
@@ -287,21 +281,20 @@ button { touch-action: manipulation; }
 }
 
 .actions button {
-  flex: 1;
+  flex: 1 1 auto;
   padding-inline: 0.65rem;
   font-size: 0.9375rem;
   font-weight: 650;
 }
 
 .actions .primary {
-  flex: 1.5;
   border-color: var(--accent);
   background: var(--accent);
   color: white;
 }
 
 @media (hover: hover) {
-  .download:hover, .keypad button:hover, .actions button:hover { background: #eaf0e7; }
+  .download:hover, .keypad button:hover, .actions button:hover, .notice button:hover { background: #eaf0e7; }
   .actions .primary:hover { background: #194431; }
 }
 
@@ -327,6 +320,40 @@ button { touch-action: manipulation; }
   background: #deeee0;
 }
 
+.share-panel, .solved {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.share-panel label { font-weight: 650; }
+
+.share-panel input {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 0.375rem;
+  padding-inline: 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  user-select: all;
+}
+
+.share-status, .solved p, .solved ul, .notice p {
+  margin-top: 0.375rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.solved ul { margin-bottom: 0; padding-inline-start: 1.25rem; }
+.solved li + li { margin-top: 0.5rem; }
+.solved-id { display: block; color: var(--ink); overflow-wrap: anywhere; }
+.notice button { margin-top: 0.75rem; padding-inline: 0.75rem; }
+
 @media (max-width: 43rem) {
   .page { max-width: 35rem; }
 
@@ -341,7 +368,7 @@ button { touch-action: manipulation; }
 @media print {
   :root { background: white; }
   .page { max-width: none; padding: 0; }
-  .masthead, .rules, .controls, .board-toolbar { display: none; }
+  .masthead, .rules, .controls, .board-toolbar, .notice { display: none; }
   .workspace { display: block; }
   .play {
     width: min(100%, 155mm);
@@ -350,12 +377,7 @@ button { touch-action: manipulation; }
   }
   .print-title { display: block; margin-bottom: 5mm; }
   .print-title p { margin-top: 1mm; font-size: 10pt; }
-  .board { background: white; box-shadow: none; }
-  .grid-cell .cell {
-    color: black;
-    outline: 0;
-  }
-  .cell .value { color: black; }
-  .grid-cell { border-color: #888; }
-  .board, .grid-cell.edge-right, .grid-cell.edge-bottom { border-color: black; }
+  .cell { outline: 0; }
+  .clue, .cell .value, .cage-lines, .coordinates { color: black; }
+  .cell-lines { color: #888; }
 }

@@ -4,12 +4,48 @@ const workspace = document.querySelector(".workspace");
 const sizePicker = document.querySelector("#size");
 const difficultyPicker = document.querySelector("#difficulty");
 const board = document.querySelector("#board");
+const boardFrame = document.querySelector(".board-frame");
+const artwork = document.querySelector("#board-art");
 const keypad = document.querySelector("#keypad");
 const progress = document.querySelector("#progress");
 const feedback = document.querySelector("#status");
+const randomButton = document.querySelector("#random");
+const shareButton = document.querySelector("#share");
+const sharePanel = document.querySelector("#share-panel");
+const shareUrl = document.querySelector("#share-url");
+const shareStatus = document.querySelector("#share-status");
+const unknownPuzzle = document.querySelector("#unknown-puzzle");
+const solvedList = document.querySelector("#solved-list");
+const solvedEmpty = document.querySelector("#solved-empty");
 const symbols = { given: "", add: "+", multiply: "×", subtract: "−", divide: "÷" };
 const storagePrefix = "kenken.game.v1:";
 const boards = new Map();
+const selectedByPair = new Map();
+const solved = new Map();
+const solvedDate = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+
+const pairKey = (size, profile) => `${size}:${profile}`;
+const puzzlePair = record => pairKey(record.size, record.provenance.profile);
+const puzzleGroups = new Map();
+const puzzlesById = new Map();
+for (const record of PUZZLES) {
+  if (puzzlesById.has(record.id)) continue;
+  puzzlesById.set(record.id, record);
+  const key = puzzlePair(record);
+  if (!puzzleGroups.has(key)) puzzleGroups.set(key, []);
+  puzzleGroups.get(key).push(record);
+}
+
+const set21 = Array.isArray(globalThis.KENKEN_SET_21) ? globalThis.KENKEN_SET_21 : [];
+for (const record of set21) {
+  if (record?.schema === "kenken.puzzle/v1" &&
+      /^kk-([45])x\1-[0-9a-f]{16}$/.test(record.id) &&
+      record.id.startsWith(`kk-${record.size}x${record.size}-`) &&
+      puzzleGroups.has(pairKey(record.size, record.provenance?.profile)) &&
+      !puzzlesById.has(record.id)) {
+    puzzlesById.set(record.id, record);
+  }
+}
 
 let puzzle;
 let cages;
@@ -67,6 +103,7 @@ function button(label, className) {
 
 function buildBoard() {
   const { size } = puzzle;
+  drawBoardArt(boardFrame, artwork, size, cages, cellCages);
   board.style.setProperty("--size", size);
   board.replaceChildren();
   cells = [];
@@ -82,22 +119,20 @@ function buildBoard() {
       const gridCell = document.createElement("div");
       gridCell.className = "grid-cell";
       gridCell.setAttribute("role", "gridcell");
-      gridCell.classList.toggle("edge-right", column + 1 < size && cage !== cellCages[index + 1]);
-      gridCell.classList.toggle("edge-bottom", row + 1 < size && cage !== cellCages[index + size]);
 
       const cellButton = button("", given ? "cell given" : "cell");
       cellButton.dataset.index = index;
+      const drawing = svgElement("svg", {
+        viewBox: `0 0 ${cellSize} ${cellSize}`,
+        "aria-hidden": "true",
+        focusable: "false",
+      });
       if (!given && cage.indexes[0] === index) {
-        const clue = document.createElement("span");
-        clue.className = "clue";
-        clue.setAttribute("aria-hidden", "true");
-        clue.textContent = cage.target + symbols[cage.operator];
-        cellButton.append(clue);
+        drawing.append(cageClue(cage.target + symbols[cage.operator]));
       }
-      const value = document.createElement("span");
-      value.className = "value";
-      value.setAttribute("aria-hidden", "true");
-      cellButton.append(value);
+      const value = strokePath("", 45, "value");
+      drawing.append(value);
+      cellButton.append(drawing);
       gridCell.append(cellButton);
       rowElement.append(gridCell);
 
@@ -127,7 +162,7 @@ function renderState() {
   cells.forEach(({ gridCell, cellButton, value, given, label }, index) => {
     const digit = values[index];
     const conflict = conflicts.has(index);
-    value.textContent = digit || "";
+    value.setAttribute("d", digit ? centeredGlyphPath(String(digit), 500, given ? 270 : 390, 460) : "");
     gridCell.setAttribute("aria-selected", index === selected);
     cellButton.tabIndex = index === selected ? 0 : -1;
     cellButton.classList.toggle("in-cage", cellCages[index] === cellCages[selected]);
@@ -147,19 +182,29 @@ function playPuzzle(next) {
   puzzle = next;
   cellCages = new Array(puzzle.size ** 2);
   cages = puzzle.cages.map(({ operator, target, cells }) => {
-    const indexes = cells.map(({ row, column }) => row * puzzle.size + column);
-    const cage = { operator, target, indexes };
-    indexes.forEach(index => { cellCages[index] = cage; });
-    return cage;
-  });
+    const indexes = cells.map(({ row, column }) => row * puzzle.size + column).sort((a, b) => a - b);
+    return { operator, target, indexes };
+  }).sort((a, b) => a.indexes[0] - b.indexes[0]);
+  for (const cage of cages) {
+    for (const index of cage.indexes) cellCages[index] = cage;
+  }
 
   values = boards.get(puzzle.id) ?? initialValues(readSaved(puzzle.id));
-  selected = cellCages.findIndex(cage => cage.operator !== "given");
+  boards.set(puzzle.id, values);
+  selected = Math.max(0, cellCages.findIndex(cage => cage.operator !== "given"));
   conflicts.clear();
   setFeedback();
+  sharePanel.hidden = true;
+  shareButton.setAttribute("aria-expanded", "false");
+  shareUrl.value = "";
+  shareStatus.textContent = "";
   sizePicker.value = puzzle.size;
   difficultyPicker.value = puzzle.provenance.profile;
+  const key = puzzlePair(puzzle);
+  selectedByPair.set(key, puzzle.id);
+  save(`selected:${key}`, puzzle.id);
   save("selected", puzzle.id);
+  randomButton.disabled = !puzzleGroups.get(key).some(record => record.id !== puzzle.id);
   document.querySelector("#number-range").textContent = `1 to ${puzzle.size}`;
   const sizeLabel = sizePicker.selectedOptions[0].textContent;
   const difficultyLabel = difficultyPicker.selectedOptions[0].textContent;
@@ -213,6 +258,44 @@ function markRepeats(indexes) {
   }
 }
 
+function savedSolveDate(id) {
+  const date = readSaved(`solved:${id}`);
+  return typeof date === "string" && Number.isFinite(Date.parse(date)) ? date : null;
+}
+
+function renderSolved() {
+  solvedList.replaceChildren();
+  const latestFirst = [...solved].sort((a, b) => Date.parse(b[1]) - Date.parse(a[1]));
+  for (const [id, date] of latestFirst) {
+    const record = puzzlesById.get(id);
+    const item = document.createElement("li");
+    const identity = document.createElement("span");
+    identity.className = "solved-id";
+    identity.textContent = id;
+    const details = document.createElement("span");
+    const { size, provenance: { profile } } = record;
+    const difficulty = difficultyPicker.querySelector(`option[value="${profile}"]`).textContent;
+    const time = document.createElement("time");
+    time.dateTime = date;
+    time.textContent = solvedDate.format(new Date(date));
+    details.append(`${size}×${size} · ${difficulty} · `, time);
+    item.append(identity, details);
+    solvedList.append(item);
+  }
+  solvedEmpty.hidden = solved.size > 0;
+  solvedList.hidden = solved.size === 0;
+}
+
+function recordSolve() {
+  const { id } = puzzle;
+  if (solved.has(id)) return;
+  const saved = savedSolveDate(id);
+  const date = saved ?? new Date().toISOString();
+  solved.set(id, date);
+  if (!saved) save(`solved:${id}`, date);
+  renderSolved();
+}
+
 function checkBoard() {
   conflicts.clear();
   const { size } = puzzle;
@@ -233,6 +316,7 @@ function checkBoard() {
   } else if (empty) {
     setFeedback(`Incomplete. ${empty} ${empty === 1 ? "cell" : "cells"} left to fill.`, "incomplete");
   } else {
+    recordSolve();
     setFeedback("Solved! Every row, column and cage checks out.", "solved");
   }
   renderState();
@@ -240,7 +324,7 @@ function checkBoard() {
 
 function resetBoard() {
   values = initialValues();
-  selected = cellCages.findIndex(cage => cage.operator !== "given");
+  selected = Math.max(0, cellCages.findIndex(cage => cage.operator !== "given"));
   conflicts.clear();
   storeBoard();
   setFeedback("Puzzle reset.", "reset");
@@ -286,12 +370,57 @@ keypad.addEventListener("click", event => {
 });
 
 function changePuzzle() {
-  const size = Number(sizePicker.value);
-  const profile = difficultyPicker.value;
-  const next = PUZZLES.find(candidate =>
-    candidate.size === size && candidate.provenance.profile === profile
-  );
-  if (next && next !== puzzle) playPuzzle(next);
+  const key = pairKey(sizePicker.value, difficultyPicker.value);
+  const remembered = puzzlesById.get(selectedByPair.get(key) ?? readSaved(`selected:${key}`));
+  const next = remembered && puzzlePair(remembered) === key ? remembered : puzzleGroups.get(key)[0];
+  if (next === puzzle) return;
+  clearSharedId();
+  playPuzzle(next);
+}
+
+function randomPuzzle() {
+  const alternatives = puzzleGroups.get(puzzlePair(puzzle)).filter(record => record.id !== puzzle.id);
+  if (!alternatives.length) return;
+  clearSharedId();
+  playPuzzle(alternatives[Math.floor(Math.random() * alternatives.length)]);
+  setFeedback(`Opened ${puzzle.id}.`, "opened");
+}
+
+async function sharePuzzle() {
+  const url = new URL(`/kenken/#${puzzle.id}`, location.href).href;
+  shareUrl.value = url;
+  sharePanel.hidden = false;
+  shareButton.setAttribute("aria-expanded", "true");
+  shareStatus.textContent = "";
+  try {
+    await navigator.clipboard.writeText(url);
+    if (shareUrl.value === url) shareStatus.textContent = "Puzzle link copied.";
+  } catch {
+    if (shareUrl.value !== url) return;
+    shareStatus.textContent = "Select and copy this link to share the puzzle.";
+    shareUrl.focus();
+    shareUrl.select();
+  }
+}
+
+function clearSharedId() {
+  if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+}
+
+function openFromLocation() {
+  const sharedId = location.hash.slice(1);
+  const shared = puzzlesById.get(sharedId);
+  if (sharedId && !shared) {
+    workspace.hidden = true;
+    unknownPuzzle.hidden = false;
+    document.querySelector("#unknown-title").focus();
+    return;
+  }
+
+  const next = shared ?? puzzle ?? puzzlesById.get(readSaved("selected")) ?? PUZZLES[0];
+  if (next !== puzzle) playPuzzle(next);
+  unknownPuzzle.hidden = true;
+  workspace.hidden = false;
 }
 
 sizePicker.addEventListener("change", changePuzzle);
@@ -299,7 +428,18 @@ difficultyPicker.addEventListener("change", changePuzzle);
 document.querySelector("#check").addEventListener("click", checkBoard);
 document.querySelector("#reset").addEventListener("click", resetBoard);
 document.querySelector("#print").addEventListener("click", () => window.print());
+randomButton.addEventListener("click", randomPuzzle);
+shareButton.addEventListener("click", sharePuzzle);
+document.querySelector("#recover").addEventListener("click", () => {
+  clearSharedId();
+  openFromLocation();
+  sizePicker.focus();
+});
+window.addEventListener("hashchange", openFromLocation);
 
-const savedId = readSaved("selected");
-playPuzzle(PUZZLES.find(candidate => candidate.id === savedId) ?? PUZZLES[0]);
-workspace.hidden = false;
+for (const id of puzzlesById.keys()) {
+  const date = savedSolveDate(id);
+  if (date) solved.set(id, date);
+}
+renderSolved();
+openFromLocation();

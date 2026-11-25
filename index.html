@@ -7,6 +7,8 @@
   <title>Play KenKen</title>
   <link rel="stylesheet" href="./game/style.css">
   <script defer src="./game/puzzles.js"></script>
+  <script defer src="./game/set-21.js"></script>
+  <script defer src="./game/board-art.js"></script>
   <script defer src="./game/game.js"></script>
 </head>
 <body>
@@ -24,6 +26,12 @@
     </header>
 
     <noscript><p>Enable JavaScript to play KenKen in your browser.</p></noscript>
+
+    <section class="notice" id="unknown-puzzle" aria-labelledby="unknown-title" hidden>
+      <h2 id="unknown-title" tabindex="-1">Puzzle unavailable</h2>
+      <p>This puzzle ID is missing from the local catalog.</p>
+      <button type="button" id="recover">Return to puzzle selection</button>
+    </section>
 
     <div class="workspace" hidden>
       <section class="rules" aria-labelledby="rules-title">
@@ -55,7 +63,10 @@
           <h2 id="print-name"></h2>
           <p id="print-id"></p>
         </div>
-        <div id="board" class="board" role="grid" aria-label="KenKen board" aria-describedby="keyboard-help"></div>
+        <div class="board-frame">
+          <svg id="board-art" aria-hidden="true" focusable="false"></svg>
+          <div id="board" class="board" role="grid" aria-label="KenKen board" aria-describedby="keyboard-help"></div>
+        </div>
       </section>
 
       <section class="controls" aria-labelledby="controls-title">
@@ -65,9 +76,21 @@
         <div class="actions">
           <button type="button" class="primary" id="check">Check</button>
           <button type="button" id="reset">Reset</button>
-          <button type="button" id="print">Print</button>
+          <button type="button" id="print">Print puzzle</button>
+          <button type="button" id="random">New random puzzle</button>
+          <button type="button" id="share" aria-expanded="false" aria-controls="share-panel">Share puzzle</button>
         </div>
         <p id="status" class="status" role="status" aria-atomic="true"></p>
+        <div id="share-panel" class="share-panel" hidden>
+          <label for="share-url">Puzzle link</label>
+          <input id="share-url" type="text" readonly spellcheck="false" autocomplete="off">
+          <p id="share-status" class="share-status" role="status"></p>
+        </div>
+        <section class="solved" aria-labelledby="solved-title">
+          <h2 id="solved-title">Solved puzzles</h2>
+          <p id="solved-empty">No puzzles solved yet.</p>
+          <ul id="solved-list" hidden></ul>
+        </section>
       </section>
     </div>
   </main>
