@@ -178,6 +178,7 @@ function renderState() {
 }
 
 function playPuzzle(next) {
+  clearCelebration();
   puzzle = next;
   cellCages = new Array(puzzle.size ** 2);
   cages = puzzle.cages.map(({ operator, target, cells }) => {
@@ -225,10 +226,17 @@ function enterDigit(digit) {
     setFeedback("This number is given. Select another cell.", "given");
     return;
   }
+  if (values[selected] === digit) return;
+  clearCelebration();
   values[selected] = digit;
+  storeBoard();
+
+  if (!values.includes(0)) {
+    if (checkBoard()) celebrateSolve();
+    return;
+  }
   conflicts.clear();
   setFeedback();
-  storeBoard();
   renderState();
 }
 
@@ -295,6 +303,41 @@ function recordSolve() {
   renderSolved();
 }
 
+function clearCelebration() {
+  boardFrame.querySelector(".confetti")?.remove();
+}
+
+function celebrateSolve() {
+  if (!matchMedia("screen and (prefers-reduced-motion: no-preference)").matches) return;
+
+  const burst = document.createElement("div");
+  burst.className = "confetti";
+  burst.setAttribute("aria-hidden", "true");
+  boardFrame.append(burst);
+
+  const { clientWidth: width, clientHeight: height } = boardFrame;
+  const colors = ["#158560", "#dfa21d", "#cc4a62", "#397bad", "#8754ab"];
+  const count = 28;
+  const duration = 1050;
+  for (let index = 0; index < count; index++) {
+    const piece = document.createElement("span");
+    piece.style.backgroundColor = colors[index % colors.length];
+    burst.append(piece);
+
+    const across = ((index + Math.random()) / count - 0.5) * width * 0.88;
+    const rise = (0.16 + Math.random() * 0.22) * height;
+    const fall = (0.18 + Math.random() * 0.22) * height;
+    const spin = (Math.random() - 0.5) * 900;
+    piece.animate([
+      { transform: "translate(0, 0) rotate(0deg)", easing: "ease-out" },
+      { transform: `translate(${across * 0.6}px, ${-rise}px) rotate(${spin * 0.45}deg)`, offset: 0.4, easing: "ease-in" },
+      { opacity: 1, offset: 0.65 },
+      { transform: `translate(${across}px, ${fall}px) rotate(${spin}deg)`, opacity: 0 },
+    ], duration);
+  }
+  window.setTimeout(() => burst.remove(), duration);
+}
+
 function checkBoard() {
   conflicts.clear();
   const { size } = puzzle;
@@ -315,13 +358,15 @@ function checkBoard() {
   } else if (empty) {
     setFeedback(`Incomplete. ${empty} ${empty === 1 ? "cell" : "cells"} left to fill.`, "incomplete");
   } else {
-    recordSolve();
     setFeedback("Solved! Every row, column and cage checks out.", "solved");
+    recordSolve();
   }
   renderState();
+  return conflicts.size === 0 && empty === 0;
 }
 
 function resetBoard() {
+  clearCelebration();
   values = initialValues();
   selected = Math.max(0, cellCages.findIndex(cage => cage.operator !== "given"));
   conflicts.clear();
